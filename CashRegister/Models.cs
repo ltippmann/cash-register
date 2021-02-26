@@ -4,7 +4,7 @@ using System.Text;
 
 namespace CashRegister
 {
-    public enum Denomination
+    public enum Denomination: ushort
     {
         Penny = 1,
         Nickel = 5,
