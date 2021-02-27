@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace CashRegister
+namespace CashRegister.Domain
 {
     public enum Denomination: ushort
     {
