@@ -5,6 +5,7 @@ using System.Collections.Immutable;
 using CashRegister.Domain;
 using CashRegister.Domain.ChangeTabulationSrategies;
 using System.Collections.Generic;
+using CashRegister.Domain.Models;
 
 namespace CashRegister.UnitTests
 {
@@ -50,6 +51,8 @@ namespace CashRegister.UnitTests
         public void GIVEN_a_change_due_divisible_by_three_WHEN_TabulateChange_is_called_THEN_the_divisibleByThreeStrategy_should_be_used()
         {
             AssertIsDivisibleByThreeResult(tabulator.TabulateChange(2.0m, 5.0m)); // 2.00 % 0.03 = 0
+            AssertIsDivisibleByThreeResult(tabulator.TabulateChange(4.01m, 5.0m)); // 0.99 % 0.01 = 0
+            AssertIsDivisibleByThreeResult(tabulator.TabulateChange(4.97m, 5.0m)); // 0.03 % 0.03 = 0
             AssertIsDivisibleByThreeResult(tabulator.TabulateChange(2.0m, 52634.0m)); // 52632.00 % 0.03 = 0
         }
 
@@ -59,6 +62,8 @@ namespace CashRegister.UnitTests
         {
             AssertIsNotDivisibleByThreeResult(tabulator.TabulateChange(4.0m, 5.0m)); // 1.00 % 0.03 = 1
             AssertIsNotDivisibleByThreeResult(tabulator.TabulateChange(3.0m, 5.0m)); // 2.00 % 0.03 = 2
+            AssertIsNotDivisibleByThreeResult(tabulator.TabulateChange(4.02m, 5.0m)); // 0.98 % 0.03 = 2
+            AssertIsNotDivisibleByThreeResult(tabulator.TabulateChange(4.03m, 5.0m)); // 0.97 % 0.03 = 1
             AssertIsNotDivisibleByThreeResult(tabulator.TabulateChange(2.0m, 52635.0m)); // 52633.00 % 0.03 = 1
         }
 

@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "CashRegister": {
+      "commandName": "Project",
+      "commandLineArgs": "..\\..\\..\\..\\..\\data\\sample_input.csv"
+    }
+  }
+}

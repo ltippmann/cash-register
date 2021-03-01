@@ -1,5 +1,6 @@
 ﻿using CashRegister.Domain;
 using CashRegister.Domain.ChangeTabulationSrategies;
+using CashRegister.Domain.Models;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;

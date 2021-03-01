@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CashRegister.Domain.Models;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -29,6 +30,7 @@ namespace CashRegister.Domain.ChangeTabulationSrategies
 
         private static ulong BigRandom(ulong max)
         {
+            if (max == 0) return 0;
             var buf = new byte[8];
             _rand.NextBytes(buf);
             return BitConverter.ToUInt64(buf, 0) % max;

@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using CashRegister.Domain;
+using CashRegister.Domain.Models;
 using CommandLine;
 
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("CashRegister.UnitTests")]
@@ -21,10 +22,10 @@ namespace CashRegister
         {
             [Value(0, MetaName = "InputFiles", Required = true, HelpText = "Input CSV files to process.")]
             public IEnumerable<string> InputFiles { get; set; }
-            [Option('o', "output", Default = "output.txt", HelpText = "File to write processing output to.")]
-            public string OutputFile { get; set; } = "output.txt";
+            [Option('o', "output", HelpText = "File to write processing output to.")]
+            public string OutputFile { get; set; }
             [Option('q', "quiet")]
-            public bool Quiet { get; set; } = false;
+            public bool Quiet { get; set; }
         }
 
         public static void Run(CommandLineArgs args)
@@ -52,7 +53,7 @@ namespace CashRegister
                 new Domain.ChangeTabulationSrategies.RandomTabulationStrategy(),
                 new Domain.ChangeTabulationSrategies.BigEndianTabulationStrategy());
 
-            using var sw = new StreamWriter(args.OutputFile);
+            using var sw = string.IsNullOrEmpty(args.OutputFile) ? null : new StreamWriter(args.OutputFile);
             
             foreach (var inputFile in args.InputFiles)
             {
@@ -74,47 +75,50 @@ namespace CashRegister
                 using var cr = new CsvHelper.CsvReader(sr,
                     new CsvHelper.Configuration.CsvConfiguration(CultureInfo.InvariantCulture)
                     {
-                        BadDataFound = a => 
+                        //BadDataFound = a => 
+                        //{
+                        //    var line = string.IsNullOrWhiteSpace(a.RawRecord) ? "" : $"# {a.RawRecord}";
+                        //    sw?.WriteLine(line);
+                        //    if (!args.Quiet)
+                        //        Console.WriteLine(line);
+                            //},
+                            HasHeaderRecord = false,
+                        HeaderValidated = null,
+                        IgnoreBlankLines = false,
+                        ShouldSkipRecord = a =>
                         {
-                            var line = string.IsNullOrWhiteSpace(a.RawRecord) ? "" : $"# {a.RawRecord}";
-                            sw.WriteLine(line);
-                            if (!args.Quiet)
-                                Console.WriteLine(line);
-                        },
+                            if(a.Record.Length != 2 || !decimal.TryParse(a.Record[0], out _) || !decimal.TryParse(a.Record[1], out _))
+                            {
+                                var line = string.Join(",", a.Record);
+                                sw?.WriteLine(line);
+                                if (!args.Quiet)
+                                    Console.WriteLine(line);
+                                return true;
+                            }
+                            return false;
+                        }
                     });
                 
                 while (cr.Read())
                 {
                     var input = cr.GetRecord<InputRecord>();
-                    var result = $"Amount owed: {input.AmountOwed:C}  Amount tendered: {input.AmountTendered} => " + (
+                    var result = $"Amount owed: {input.AmountOwed:C}  Amount tendered: {input.AmountTendered:C}" + (
                         input.AmountOwed < 0 ? "ERROR: Cannot owe negative money." :
                         input.AmountTendered < 0 ? "ERROR: Cannot tender negative money." :
                         input.AmountTendered < input.AmountOwed ? "ERROR: Need more money." :
                         input.AmountOwed == input.AmountTendered ? "No change owed." :
-                        PrettyPrintChangeOwed(changeTabulator.TabulateChange(input.AmountOwed, input.AmountTendered)));
-                    sw.WriteLine(result);
+                        ($"  Change due: {input.AmountTendered - input.AmountOwed:C}{IsDivisibleByThree(input.AmountOwed, input.AmountTendered)} => "
+                            + changeTabulator.TabulateChange(input.AmountOwed, input.AmountTendered)
+                                .PrettyPrint()));
+                    sw?.WriteLine(result);
                     if (!args.Quiet)
                         Console.WriteLine(result);
                 }
             }
         }
 
-        private static string PrettyPrintChangeOwed(IEnumerable<KeyValuePair<Denomination, ulong>> changeOwed)
-            => string.Join(", ",
-                changeOwed
-                    .OrderByDescending(kvp => kvp.Key)
-                    .Select(kvp =>
-                        kvp.Key == Denomination.Hundred ? $"{kvp.Value} Benjamin{(kvp.Value != 1 ? "s" : "")}" :
-                        kvp.Key == Denomination.Fifty ? $"{kvp.Value} fift{(kvp.Value != 1 ? "ies" : "y")}" :
-                        kvp.Key == Denomination.Twenty ? $"{kvp.Value} twent{(kvp.Value != 1 ? "ies" : "y")}" :
-                        kvp.Key == Denomination.Ten ? $"{kvp.Value} ten{(kvp.Value != 1 ? "s" : "")}" :
-                        kvp.Key == Denomination.Five ? $"{kvp.Value} five{(kvp.Value != 1 ? "s" : "")}" :
-                        kvp.Key == Denomination.One ? $"{kvp.Value} one{(kvp.Value != 1 ? "s" : "")}" :
-                        kvp.Key == Denomination.Quarter ? $"{kvp.Value} quarter{(kvp.Value != 1 ? "s" : "")}" :
-                        kvp.Key == Denomination.Dime ? $"{kvp.Value} dime{(kvp.Value != 1 ? "s" : "")}" :
-                        kvp.Key == Denomination.Nickel ? $"{kvp.Value} nickel{(kvp.Value != 1 ? "s" : "")}" :
-                        kvp.Key == Denomination.Penny ? $"{kvp.Value} penn{(kvp.Value != 1 ? "ies" : "y")}" :
-                        $"{kvp.Value} ????"));
+        private static string IsDivisibleByThree(decimal owed, decimal tendered)
+            => ((ulong)(tendered * 100) - (ulong)(owed * 100)) % 3 == 0 ? "*" : "";
 
         private class InputRecord
         {

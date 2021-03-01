@@ -2,6 +2,7 @@
 using System.Collections.Immutable;
 using System.Linq;
 using CashRegister.Domain.ChangeTabulationSrategies;
+using CashRegister.Domain.Models;
 
 namespace CashRegister.Domain
 {
@@ -22,7 +23,7 @@ namespace CashRegister.Domain
             =>  amountDue < 0 ? throw new ArgumentException("Amount due must be greater than zero.") :
                 amountTendered < 0 ? throw new ArgumentException("Amount tendered must be greater than zero.") :
                 amountTendered < amountDue ? throw new ArgumentException("Amount tendered must be greater than or equal amount due.") :
-                TabulateChange((ulong)(amountTendered - amountDue) * 100);
+                TabulateChange((ulong)((amountTendered - amountDue) * 100));
 
         private IImmutableDictionary<Denomination, ulong> TabulateChange(ulong changeDueInCents)
             => DetermineTabulationStrategy(changeDueInCents)

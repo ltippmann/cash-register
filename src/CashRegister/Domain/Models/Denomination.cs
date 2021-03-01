@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace CashRegister.Domain
+﻿namespace CashRegister.Domain.Models
 {
-    public enum Denomination: ushort
+    public enum Denomination : ushort
     {
         Penny = 1,
         Nickel = 5,

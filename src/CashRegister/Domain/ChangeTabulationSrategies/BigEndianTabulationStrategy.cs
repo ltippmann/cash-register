@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using CashRegister.Domain.Models;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 
